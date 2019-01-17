@@ -31,5 +31,5 @@ OR
 `git fetch upstream`
 `git merge upstream/master`
 
-6. If a conflict arises during merge, update the file(s) to your liking, stage them and commit them.
+6. If a conflict arises during merge, update the file(s) to your liking, stage them and commit them. 
 >>>>>>> dd25020246d174b1c016cbce8e2eacb7e2cbc8bd
