@@ -5,7 +5,7 @@ date: "Spring 2019"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ## LESSON OBJECTIVES
@@ -108,7 +108,7 @@ longnameforillustration
 
 ```{r}
 long_name_for_illustration <- 11
-
+long_name_for_illustration
 ```
 
 ### Functions
@@ -116,7 +116,7 @@ R functions are the major tool used in R. Functions can do virtually unlimited t
 
 ```{r}
 seq(1, 10)
-ten_sequence <- seq(1, 10)
+ten_sequence <- seq(1, 10); ten_sequence
 ten_sequence
 (ten_sequence <- seq(1, 10))
 
