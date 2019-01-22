@@ -57,7 +57,8 @@ testvector <- c(80,70,50,40)
 passvector <- c(TRUE,TRUE,TRUE,FALSE)
 
 testdataframe <- data.frame(namevector,testvector,passvector)
-names(testdataframe) <- c("Name","Score","Passed"); View(testdataframe)
+names(testdataframe) <- c("Name","Score","Passed"); 
+testdataframe
 
 ```
 
