@@ -8,7 +8,6 @@ fig_width: 5
 fig_height: 2.5
 editor_options: 
   chunk_output_type: console
-
 ---
 
 ## LESSON OBJECTIVES
@@ -82,11 +81,13 @@ help(as.Date)
 # (code must be uncommented)
 today <- Sys.Date()
 format(today, format = "%B")
-#format(today, format = "")
-#format(today, format = "")
-#format(today, format = "")
+format(today, format = c("%Y","%B","%d"))
+format(today, format = c("%m","%d"))
+format(today, format = c("%A","%B","%d","%Y"))
 
+#tells R that the format below is what it was read in as. Then it will rewrite the date into year month day.
 USGS.flow.data$datetime <- as.Date(USGS.flow.data$datetime, format = "%m/%d/%y") 
+head(USGS.flow.data$datetime)
 ```
 
 Note that for every date prior to 1969, R has assigned the date in the 2000s rather than the 1900s. This can be fixed with an `ifelse` statement inside a function. Run through the code below and write what is happening in the comment above each line.
