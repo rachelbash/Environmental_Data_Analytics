@@ -31,7 +31,7 @@ library(tidyverse)
 # 3. Import datasets
 USGS.flow.data <- read.csv("./Data/Raw/USGS_Site02085000_Flow_Raw.csv")
 
-View(USGS.flow.data)
+#View(USGS.flow.data)
 # Alternate option: click on data frame in Environment tab
 
 class(USGS.flow.data)
@@ -93,19 +93,20 @@ head(USGS.flow.data$datetime)
 Note that for every date prior to 1969, R has assigned the date in the 2000s rather than the 1900s. This can be fixed with an `ifelse` statement inside a function. Run through the code below and write what is happening in the comment above each line.
 
 ```{r}
-# 
+# deletes all the dashes in the dates(and 2018->18), so the first date is now 180101
 USGS.flow.data$datetime <- format(USGS.flow.data$datetime, "%y%m%d")
 
-#
+# function that adds 19 to date if date is greater than 12/31/18. Paste0 amends something to beginning of string. Take two things and put them together.
 create.early.dates <- (function(d) {
        paste0(ifelse(d > 181231,"19","20"),d)
        })
-#
+#applying the function to the datetime column, which adds 19 to 180101
 USGS.flow.data$datetime <- create.early.dates(USGS.flow.data$datetime)
+class(USGS.flow.data$datetime) #shows that it is a character
 
-#
+#changes format back into date. Adds dashes back in so it is easier to read as a Date with 1918 as first year
 USGS.flow.data$datetime <- as.Date(USGS.flow.data$datetime, format = "%Y%m%d") 
-
+class(USGS.flow.data$datetime) #will show "Date"
 ```
 
 ### Removing NAs
@@ -118,13 +119,17 @@ summary(USGS.flow.data$gage.height.mean)
 ```
 Question: What types of research questions might make it favorable to remove NAs from a dataset, and what types of research questions might make it favorable to retain NAs in the dataset?
 
-> Answer: 
+> Answer: Removing NAs would be helpful if . Keeping NA is good because the NA might actually provide valuable data. Be careful that there could be true NAs and black spaces which could also be considered NAs. If there is a threshold to detect and it falls below threshold, NAs would be inputed. 
 
 ```{r}
+#create new df that has NAs omitted
 USGS.flow.data.complete <- na.omit(USGS.flow.data)
 dim(USGS.flow.data)
 dim(USGS.flow.data.complete)
+#complete.cases tells you which cases are complete
+complete.cases(USGS.flow.data)
 
+#summary statistics. Only includes values that have a number in them
 mean(USGS.flow.data.complete$discharge.mean)
 sd(USGS.flow.data.complete$discharge.mean)
 summary(USGS.flow.data.complete$discharge.mean)
@@ -142,8 +147,11 @@ Note: each of these approaches utilize the package "ggplot2". We will be coverin
 Visualize count data for categorical variables. 
 
 ```{r, fig.height = 3, fig.width = 4}
+#aes is giving some aesthetics, then tell it to give you a bar plot
 ggplot(USGS.flow.data.complete, aes(x = discharge.mean.approval)) +
   geom_bar()
+#A=approved, P=provisional data subject to revision
+#geom bar works great for categoical variables 
 ```
 
 ### Histogram (function: geom_histogram)
@@ -151,24 +159,24 @@ ggplot(USGS.flow.data.complete, aes(x = discharge.mean.approval)) +
 Visualize distributions of values for continuous numerical variables. What is happening in each line of code? Insert a comment above each line.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+#tell which plot to plot and how. Discharge mean is continuous quantitative variable
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean))
 
-#
+# pick better binwidth, zooms in so that it goes by every 10 units
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean), binwidth = 10)
 
-#
+#bins is just the number of bins total in the whole plot
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = discharge.mean), bins = 20)
 
-#
+#add command to create continuous x axis scale that only goes from 0-500. Zooms in on distribution in first 500 rows
 ggplot(USGS.flow.data.complete, aes(x = discharge.mean)) +
   geom_histogram(binwidth = 10) + 
   scale_x_continuous(limits = c(0, 500))
   
-#
+#looking at gage height now
 ggplot(USGS.flow.data.complete) +
   geom_histogram(aes(x = gage.height.mean))
 
@@ -178,16 +186,18 @@ ggplot(USGS.flow.data.complete) +
 An alternate to a histogram is a frequency polygon graph (distributions of values for continuous numerical variables). Instead of displaying bars,  counts of continuous variables are displayed as lines. This is advantageous if you want to display multiple variables or categories of variables at once.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+#can create a lines for different variables
 ggplot(USGS.flow.data.complete) +
   geom_freqpoly(aes(x = gage.height.mean), bins = 50) +
   geom_freqpoly(aes(x = gage.height.min), bins = 50, color = "blue") +
   geom_freqpoly(aes(x = gage.height.max), bins = 50, color = "red") +
   scale_x_continuous(limits = c(0, 10))
+#more minimum counts at the lower numbers, then drops and you have a fewer count of minimum values as you go up.
 
-#
+# graphing gage height, and then separating by whether or not they were approved (separate by another variable). One quantitative measurement divided by categorical variables
 ggplot(USGS.flow.data.complete) +
-  geom_freqpoly(aes(x = gage.height.mean, color = gage.height.mean.approval), bins = 50) +
+  geom_freqpoly(aes(x = gage.height.mean, color = gage.height.mean.approval), 
+  bins = 50) +
   scale_x_continuous(limits = c(0, 10)) +
   theme(legend.position = "top")
 
@@ -207,15 +217,15 @@ A box-and-whisker plot is yet another alternative to histograms (distributions o
 An alternate option is a violin plot, which displays density distributions, somewhat like a hybrid of the box-and-whiskers and the frequency polygon plot.
 
 ```{r, fig.height = 3, fig.width = 4}
-#
+#boxplot plots gage height with two categorical variables
 ggplot(USGS.flow.data.complete) +
   geom_boxplot(aes(x = gage.height.mean.approval, y = gage.height.mean))
 
-#
+#to divide up two continuous quantitative variables with box plot. Useful if you have non-linear patterns, you can see it better with box plot
 ggplot(USGS.flow.data.complete) +
   geom_boxplot(aes(x = gage.height.mean, y = discharge.mean, group = cut_width(gage.height.mean, 1)))
 
-#
+# Violin, the greater the amount of samples, the wider the plot. Lines are the quantiles
 ggplot(USGS.flow.data.complete) +
   geom_violin(aes(x = gage.height.mean.approval, y = gage.height.mean), draw_quantiles = c(0.25, 0.5, 0.75))
 ```
@@ -231,7 +241,7 @@ Visualize relationships between continuous numerical variables.
 ```{r, fig.height = 3, fig.width = 4}
 ggplot(USGS.flow.data.complete) +
   geom_point(aes(x = discharge.mean, y = gage.height.mean))
-
+#shows that there is a positive correlation between discharge and gage height. Can predict discharge from gage height based on this relationship (and model)
 ```
 
 ## ENDING DISCUSSION
@@ -254,7 +264,7 @@ This passage from R for Data Science sums up some of the questions we should ask
 
 Do you see any patterns in the USGS data for the Eno River? What might be responsible for those patterns and/or relationships?
 
-> ANSWER: 
+> ANSWER: Gage height and discharge are positively related
 
 
 ```{r}
