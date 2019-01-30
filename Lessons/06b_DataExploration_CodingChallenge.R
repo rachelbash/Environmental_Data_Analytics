@@ -5,31 +5,34 @@
 ## Instructions listed in comments throughout the script.
 
 #### Setup ----
-setwd("/Users/katerisalk/Documents/Duke/Courses/Environmental_Data_Analytics")
+getwd()
 
 library("tidyverse")
 
-ecotox.neonic <- read.csv("/Data/Raw/ECOTOX_Neonicotinoids_Mortality_raw.csv")
+ecotox.neonic <- read.csv("./Data/Raw/ECOTOX_Neonicotinoids_Mortality_raw.csv")
 
 #### Basic Data Summaries ----
-head(ecotox.neonic,)
-summary(ecotox.neonic%Chemical.Name)
-summary(ecotox.neonic%Pub..Year)
+head(ecotox.neonic)
+summary(ecotox.neonic$Chemical.Name)
+summary(ecotox.neonic$Pub..Year)
 
 # Fix formatting of column names (spaces originally present were turned to periods upon import)
-colnames(ecotox.neonic)[8:12] <- c(Duration, Conc.Type, Conc.Mean, Conc.Units, Pub.Year)
+colnames(ecotox.neonic)[8:12] <- c("Duration", "Conc.Type", "Conc.Mean", "Conc.Units", "Pub.Year")
 
 # Plot histogram of counts of publication years
-ggplot(ecotox.neonic, aes(x = Pub.Year)) 
+ggplot(ecotox.neonic, aes(x = Pub.Year)) +
   geom_histogram()
 
 # Plot histogram of counts chemical names
 # hint: what is the class of Chemical.Name? There are two options for a solution.
-ggplot(ecotox.neonic, x = Chemical.Name) +
-  geom_histogram()
+class(ecotox.neonic$Chemical.Name)
+ggplot(ecotox.neonic, aes(x = Chemical.Name)) +
+  geom_bar()
 
 # Plot frequency polygon of publication years divided by chemical name
 # Define colors as something other than ggplot default 
 ggplot(ecotox.neonic) +
-  geom_freqpoly(aes(x = Pub.Year, color = Chemical.Name) +
+  geom_freqpoly(aes(x = Pub.Year, color = Chemical.Name)) +
+  scale_color_manual(values = c("red", "darkred", "purple", "lightgreen", "blue", "orange", "green",
+                                "lavender", "pink"))+
   theme(legend.position = "right")
