@@ -34,13 +34,14 @@ library(tidyverse)
 NTL.Lakes <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 #thinks its in the Assignments folder, so two .. will tell you go to back out to 
 #main folder and then into the Data folder. 
+#View(NTL.Lakes)
 ```
 
 ## 2) Learn about your system
 
 Read about your dataset in the NTL-LTER README file. What are three salient pieces of information you gained from reading this file?
 
-> ANSWER: 
+> ANSWER: The Carbon data and the Nutrients data had different sampling years. THis is a good thing to keep in mind if we have to deal with dates. There are also different sampling methods depending on the date when the samples were taken (specifically the Nutrients section). The different sampling methods could affect the data in some way. Lastly, I noticed that there were a lot of variables--the various samples with which frequency the data was collected.
 
 ## 3) Obtain basic summaries of your data
 
@@ -54,26 +55,31 @@ Write R commands to display the following information:
 
 ```{r}
 # 1
-
+dim(NTL.Lakes)
 # 2
-
+class(NTL.Lakes)
 # 3
-
+head(NTL.Lakes,8)
 # 4
-
+str(NTL.Lakes)
+#lakename = factor; sampledate = factor; depth = number; temperature = number
 # 5
-
+summary(NTL.Lakes$lakename)
+summary(NTL.Lakes$depth)
+summary(NTL.Lakes$temperature_C)
 ```
 
 Change sampledate to class = date. After doing this, write an R command to display that the class of sammpledate is indeed date. Write another R command to show the first 10 rows of the date column. 
 
 ```{r}
-
+NTL.Lakes$sampledate <- as.Date(NTL.Lakes$sampledate, format = "%m-%d-%y")
+class(NTL.Lakes$sampledate)
+head(NTL.Lakes$sampledate,10)
 ```
 
 Question: Do you want to remove NAs from this dataset? Why or why not?
 
-> ANSWER: 
+> ANSWER: No. The NAs are dispersed throughout the dataset and for each row, there are some data but not others. FINISH THIS QUESTION
 
 
 ## 4) Explore your data graphically
@@ -90,7 +96,10 @@ Write R commands to display graphs depicting:
 
 ```{r}
 # 1
-
+ggplot(NTL.Lakes) + geom_bar(aes(x=NTL.Lakes$temperature_C))
+plot(NTL.Lakes$temperature_C)
+ggplot(NTL.Lakes, aes(x = temperature_C)) +
+  geom_bar()
 # 2
 
 # 3
