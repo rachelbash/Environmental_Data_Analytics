@@ -96,22 +96,31 @@ Write R commands to display graphs depicting:
 
 ```{r}
 # 1
-ggplot(NTL.Lakes) + geom_bar(aes(x=NTL.Lakes$temperature_C))
-plot(NTL.Lakes$temperature_C)
-ggplot(NTL.Lakes, aes(x = temperature_C)) +
-  geom_bar()
+ggplot(NTL.Lakes) + 
+  geom_bar(aes(x=temperature_C, color= NTL.Lakes$lakename))
+#FINISH
 # 2
-
+ggplot(NTL.Lakes) +
+  geom_histogram(aes(x = temperature_C))
 # 3
-
+ggplot(NTL.Lakes) +
+  geom_histogram(aes(x = temperature_C), binwidth=.5)
 # 4
-
+ggplot(NTL.Lakes) +
+  geom_freqpoly(aes(x = temperature_C, color = lakename), 
+  bins = 50) +
+  scale_x_continuous(limits = c(0, 30)) +
+  theme(legend.position = "top")
 # 5
-
+ggplot(NTL.Lakes) +
+  geom_boxplot(aes(x = lakename, y = temperature_C))
 # 6
-
+ggplot(NTL.Lakes) +
+  geom_boxplot(aes(x= depth, y = temperature_C, 
+                   group = cut_width(depth,0.25)))
 # 7 
-
+ggplot(NTL.Lakes) +
+  geom_point(aes(x = depth, y = temperature_C))
 ```
 ## 5) Form questions for further data analysis
 
