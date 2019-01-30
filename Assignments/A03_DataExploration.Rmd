@@ -30,7 +30,7 @@ The completed exercise is due on Thursday, 31 January, 2019 before class begins.
 Check your working directory, load necessary packages (tidyverse), and upload the North Temperate Lakes long term monitoring dataset for the light, temperature, and oxygen data for three lakes (file name: NTL-LTER_Lake_ChemistryPhysics_Raw.csv). Type your code into the R chunk below.
 ```{r}
 #getwd()
-library(tidyverse)
+suppressMessages(library(tidyverse))
 NTL.Lakes <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 #thinks its in the Assignments folder, so two .. will tell you go to back out to 
 #main folder and then into the Data folder. 
@@ -41,7 +41,7 @@ NTL.Lakes <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 
 Read about your dataset in the NTL-LTER README file. What are three salient pieces of information you gained from reading this file?
 
-> ANSWER: The Carbon data and the Nutrients data had different sampling years. THis is a good thing to keep in mind if we have to deal with dates. There are also different sampling methods depending on the date when the samples were taken (specifically the Nutrients section). The different sampling methods could affect the data in some way. Lastly, I noticed that there were a lot of variables--the various samples with which frequency the data was collected.
+> ANSWER: The Carbon data and the Nutrients data had different sampling years. This is a good thing to keep in mind if we have to deal with dates. There are also different sampling methods depending on the date when the samples were taken (specifically the Nutrients section). The different sampling methods could affect the data in some way. Lastly, I noticed that there were a lot of variables--the various samples with which frequency the data was collected.
 
 ## 3) Obtain basic summaries of your data
 
@@ -72,14 +72,14 @@ summary(NTL.Lakes$temperature_C)
 Change sampledate to class = date. After doing this, write an R command to display that the class of sammpledate is indeed date. Write another R command to show the first 10 rows of the date column. 
 
 ```{r}
-NTL.Lakes$sampledate <- as.Date(NTL.Lakes$sampledate, format = "%m-%d-%y")
+NTL.Lakes$sampledate <- as.Date(NTL.Lakes$sampledate, format = "%m/%d/%y")
 class(NTL.Lakes$sampledate)
 head(NTL.Lakes$sampledate,10)
 ```
 
 Question: Do you want to remove NAs from this dataset? Why or why not?
 
-> ANSWER: No. The NAs are dispersed throughout the dataset and for each row, there are some data but not others. FINISH THIS QUESTION
+> ANSWER: No. The NAs are dispersed throughout the dataset and for each row, there are some data but not others. If there is good data in some rows, it would be a waste to remove the NAs because you would be removing the entire row of data. Because they are scattered throughout the dataset, it is okay to leave them in. This is different from the example we had in class where entire columns were NA up to a certain date.
 
 
 ## 4) Explore your data graphically
@@ -94,11 +94,11 @@ Write R commands to display graphs depicting:
 6. Boxplot of temperature based on depth, with depth divided into 0.25 m increments
 7. Scatterplot of temperature by depth
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # 1
 ggplot(NTL.Lakes) + 
   geom_bar(aes(x=temperature_C, color= NTL.Lakes$lakename))
-#FINISH
+
 # 2
 ggplot(NTL.Lakes) +
   geom_histogram(aes(x = temperature_C))
@@ -126,12 +126,12 @@ ggplot(NTL.Lakes) +
 
 What did you find out about your data from the basic summaries and graphs you made? Describe in 4-6 sentences.
 
-> ANSWER: 
+> ANSWER: Well, first I know that some ways of depicting data summaries are better than others. For example, the first bar graph isn't the best way to display temperature data for each lake because the bins are so small. The frequency polygon graph does a better job of showing that each lake has different variances of temperature. I also learned that, at a shallower depth, there is a bigger range of temperature differences, and the median temperature is higher at a shallower depth. The majority of temperatures that were measured for all lakes were around 5 or 6 degrees Celsius, but there histogram shows that there is a bimodel nature to the curve of the temperature distributions. There is a peak at 5-6 degrees Celsius and also a smaller peak at around 22-23 degrees Celsius.
 
 What are 3 further questions you might ask as you move forward with  analysis of this dataset?
 
-> ANSWER 1: 
+> ANSWER 1: How does dissolved Oxygen differ with temperature?
 
-> ANSWER 2: 
+> ANSWER 2: Does dissolved Oxygen vary across different lakes? What is the range of values that each lake has?
 
-> ANSWER 3: 
+> ANSWER 3: Are depth and temperature significantly correlated? To what degree?
