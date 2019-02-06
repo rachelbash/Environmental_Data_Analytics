@@ -160,8 +160,8 @@ EPAair.tidy.summary <- EPAair.tidy %>%
             max.PM2.5 = max(PM2.5, na.rm=TRUE))
 
 #13
-EPAair.tidy.monthAQI
-EPAair.tidy.summary
+print(EPAair.tidy.monthAQI)
+print(EPAair.tidy.summary)
 
 ```
 
