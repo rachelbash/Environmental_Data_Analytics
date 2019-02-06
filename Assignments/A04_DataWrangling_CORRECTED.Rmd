@@ -1,11 +1,13 @@
 ---
 title: "Assignment 4: Data Wrangling"
-author: "Student Name"
+author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
   chunk_output_type: console
 ---
+
+#questions with #5, #9
 
 ## OVERVIEW
 
@@ -34,8 +36,23 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 
 ```{r}
 #1
+getwd()
+library(tidyverse)
+library(dplyr)
+Air.O3.17 <- read.csv("./Data/Raw/EPAair_O3_NC2017_raw.csv")
+Air.O3.18 <- read.csv("./Data/Raw/EPAair_O3_NC2018_raw.csv")
+Air.PM25.17 <- read.csv("./Data/Raw/EPAair_PM25_NC2017_raw.csv")
+Air.PM25.18 <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv")
 
 #2
+summary(Air.O3.17)
+summary(Air.O3.18)
+summary(Air.PM25.17)
+summary(Air.PM25.18)
+colnames(Air.O3.17)
+colnames(Air.PM25.17)
+class(Air.O3.17$Date)
+
 ```
 
 ## Wrangle individual datasets to create processed files.
@@ -46,12 +63,27 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 
 ```{r}
 #3
+Air.O3.17$Date <- as.Date(Air.O3.17$Date, format = "%m/%d/%y")
+Air.O3.18$Date <- as.Date(Air.O3.18$Date, format = "%m/%d/%y")
+Air.PM25.17$Date <- as.Date(Air.PM25.17$Date, format = "%m/%d/%y")
+Air.PM24.18$Date <- as.Date(Air.PM25.18$Date, format = "%m/%d/%y")
 
 #4
+Air.O3.17.processed <- select(Air.O3.17, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+Air.O3.18.processed <- select(Air.O3.18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+Air.PM25.17.processed <- select(Air.PM25.17, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
+Air.PM25.18.processed <- select(Air.PM25.18, Date, DAILY_AQI_VALUE, Site.Name, AQS_PARAMETER_DESC, COUNTY, SITE_LATITUDE, SITE_LONGITUDE)
 
 #5
+Air.PM25.17.processed$AQS_PARAMETER_DESC[Air.PM25.17.processed$AQS_PARAMETER_DESC == "Acceptable PM2.5 AQI & Speciation Mass"] <- 'PM2.5'
+recode(Air.PM25.17.processed$AQS_PARAMETER_DESC, "PM2.5")
 
 #6
+write.csv(Air.O3.17.processed, row.names = FALSE, file = "./Data/Processed/EPA_Air.O3.2017")
+write.csv(Air.O3.18.processed, row.names = FALSE, file = "./Data/Processed/EPA_Air.O3.2018")
+write.csv(Air.PM25.17.processed, row.names = FALSE, file = "./Data/Processed/EPA_Air.PM25.2017")
+write.csv(Air.PM25.18.processed, row.names = FALSE, file = "./Data/Processed/EPA_Air.PM25.2018")
+
 
 ```
 
@@ -68,13 +100,24 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 11. Save your processed dataset with the following file name: "EPAair_O3_PM25_NC1718_Processed.csv"
 
 ```{r}
+#7
+Air.O3.PM25.1718 <- rbind(Air.O3.17.processed, Air.O3.18.processed, Air.PM25.17.processed, Air.PM25.18.processed)
+
 #8
+Air.O3.PM25.1718.wrangled <- Air.O3.PM25.1718 %>% 
+  filter(Site.Name == "Blackstone" | Site.Name == "Bryson City" | 
+           Site.Name == "Triple Oak") %>% 
+  separate(Date, c("Y", "m", "d"))
 
 #9
+Air.O3.PM25.1718.spread <- spread(Air.O3.PM25.1718.wrangled, DAILY_AQI_VALUE, AQS_PARAMETER_DESC)
+#not working
 
 #10
+dim(Air.O3.PM25.1718.spread)
 
 #11
+write.csv(Air.O3.PM25.1718.spread, row.names = FALSE, file = "./Data/Processed/EPAair_O3_PM25_NC1718_Processed.csv")
 
 ```
 
@@ -87,10 +130,16 @@ b. A summary table of the mean, minimum, and maximum AQI values of O3 and PM2.5 
 
 ```{r}
 #12a
+Air.O3.PM25.1718.spread.summary.AQI <- Air.O3.PM25.1718.spread %>%
+  group_by(m) %>%
+  filter(ozone & PM2.5)
+  summarise(meanAQIO3 = mean())
+  
 
 #12b
 
 #13
+View()
 
 ```
 
