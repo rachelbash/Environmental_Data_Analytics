@@ -4,8 +4,7 @@ author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
-  chunk_output_type: console
- 
+  chunk_output_type: inline
 ---
 
 ## OVERVIEW
@@ -37,7 +36,7 @@ The completed exercise is due on Thursday, 7 February, 2019 before class begins.
 #1
 getwd()
 suppressMessages(library(tidyverse))
-#library(dplyr)
+library(dplyr)
 Air.O3.17 <- read.csv("../Data/Raw/EPAair_O3_NC2017_raw.csv")
 Air.O3.18 <- read.csv("../Data/Raw/EPAair_O3_NC2018_raw.csv")
 Air.PM25.17 <- read.csv("../Data/Raw/EPAair_PM25_NC2017_raw.csv")
@@ -161,8 +160,8 @@ EPAair.tidy.summary <- EPAair.tidy %>%
             max.PM2.5 = max(PM2.5, na.rm=TRUE))
 
 #13
-View(EPAair.tidy.monthAQI)
-View(EPAair.tidy.summary)
+EPAair.tidy.monthAQI
+EPAair.tidy.summary
 
 ```
 
