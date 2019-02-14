@@ -74,8 +74,10 @@ O3plot5 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone)) +
   mytheme
 print(O3plot5)  
+#add as layer
 
 theme_set(mytheme)
+#more permanent, good for making lots of plots. Use for remainder of session
 
 O3plot6 <- ggplot(EPAair) +
   geom_point(aes(x = Date, y = Ozone))
@@ -94,13 +96,18 @@ O3plot7 <- ggplot(EPAair, aes(x = Date, y = Ozone)) +
   geom_rect(xmin = as.Date("2016-01-01"), xmax = as.Date("2020-01-01"), 
             ymin = 50, ymax = 100, fill = "yellow") +
   geom_point() +
-  geom_text(x = as.Date("2019-01-01"), y = 45, label = "good", hjust = 1, fontface = "bold") +
+  geom_text(x = as.Date("2019-01-01"), y = 45, label = "good", hjust = 1) +
   geom_text(x = as.Date("2019-01-01"), y = 95, label = "moderate", hjust = 1, fontface = "bold") +
   scale_x_date(limits = as.Date(c("2017-01-01", "2018-12-31")), 
     date_breaks = "2 months", date_labels = "%b %y") +
   ylab(expression("O"[3]* " AQI Value")) +
   theme(axis.text.x = element_text(angle = 45,  hjust = 1))
 print(O3plot7)  
+#geom_rect is making a rectangle, given min and max points and the fill color
+#geom text adds text based on location (x and y vals), hjust= how close to edge you want, fontface = how bold
+#scale_x_date used because our x axis is a date, and tell the starting and ending values, breaks between each date and the label
+#within theme, axis.text.x = element_text(angle = 45) 
+#brackets give you subscripts
 
 ```
 
@@ -115,9 +122,9 @@ There are several color palettes that are designed to be more effective than pal
 Perception is key! Choose palettes that are visually pleasing and will communicate what you are hoping your audience to perceive. Hint: base R palettes are not ideal.
 
 ```{r, warning = FALSE}
-#install.packages("viridis")
-#install.packages("RColorBrewer")
-#install.packages("colormap")
+install.packages("viridis")
+install.packages("RColorBrewer")
+install.packages("colormap")
 library(viridis)
 library(RColorBrewer)
 library(colormap)
@@ -138,15 +145,16 @@ print(NvsP)
 NvsP2 <-
   ggplot(PeterPaul.chem.nutrients, aes(x = tp_ug, y = tn_ug, color = depth, shape = lakename)) +
   geom_point(alpha = 0.8, size = 3) +
-  #xlab() +
-  #ylab() +
-  # change your legend labels here
-  scale_shape_manual(values = c(15, 17)) +
+  #xlab("Total Phosphorus, (\U003BCg/L)") +
+  #ylab("Total Nitrogen, (\U003BCg/L)") +
+  labs(x="Total Phosphorus, (\U003BCg/L)", y = "Total Nitrogen, (\U003BCg/L)", color = "Depth, m", shape = "Lake") +
+  scale_shape_manual(values = c(15, 17)) + #specifies shape
   #scale_color_distiller(palette = "Blues", direction = 1) + # use scale_color_brewer for discrete variables
   scale_color_viridis(option = "magma", direction = -1) +
   theme(legend.position = "right", 
         legend.text = element_text(size = 12), legend.title = element_text(size = 12))
 print(NvsP2)
+#can use paste and expression to add a mu 
 
 # change your y axis label to list concentration in micrograms per liter
 # remove your x axis label
@@ -154,10 +162,14 @@ print(NvsP2)
 Nutrientplot <-
   ggplot(PeterPaul.nutrients.gathered, aes(x = lakename, y = concentration, color = nutrient)) +
   geom_boxplot() +
-# place your additional edits here
+  #ylab("Concentration, ug/L") + xlab(NULL)
+ labs(x="", y="Concentration (\U003BCg/L)") +
   scale_y_continuous(expand = c(0, 0)) +
   #scale_color_brewer(palette = "YlGnBu") +
-  #scale_color_manual(values = c("#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#0c2c84")) +
+scale_color_manual(values = c("#7fcdbb", "#41b6c4", "#1d91c0", "#225ea8", "#0c2c84"), 
+                   name = "Nutrient", 
+                   breaks = c("nh34", "no23", "po4", "tn_ug", "tp_ug"), 
+                   labels = c("Ammonium", "Nitrate", "Phosphorus", "Total N", "Total P")) +
   #scale_color_viridis(discrete = TRUE) +
   theme(legend.position = "right")
 print(Nutrientplot)
@@ -171,7 +183,7 @@ PMplot.faceted <-
   geom_point() +
   facet_grid(Site.Name ~ year) + 
   scale_x_continuous(breaks = c(1:12)) +
-  #theme(strip.background = element_rect(fill = "black"), strip.text = element_text(color = "white"))
+  theme(strip.background = element_rect(fill = "black"), strip.text = element_text(color = "white")) +
   ylab(expression("PM 2.5 AQI Value")) 
 print(PMplot.faceted)
 
