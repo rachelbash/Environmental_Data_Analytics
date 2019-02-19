@@ -8,6 +8,8 @@ editor_options:
   chunk_output_type: console
 ---
 
+Rachel Bash
+
 ## LESSON OBJECTIVES
 1. Describe the components of the generalized linear model (GLM)
 2. Apply special cases of the GLM to real datasets
@@ -73,18 +75,19 @@ Are Ozone levels below the threshold for "good" AQI index (0-50)?
 summary(EPAair$Ozone)
 
 # Evaluate assumption of normal distribution
-shapiro.test(EPAair$Ozone)
+shapiro.test(EPAair$Ozone) #test whether data is close to normal distribution, 
+#so if p<0.05, then data is not normally distributed
 ggplot(EPAair, aes(x = Ozone)) +
   geom_histogram(stat = "count")
 qqnorm(EPAair$Ozone); qqline(EPAair$Ozone)
 
-O3.onesample <- t.test(EPAair$Ozone, mu = 50, alternative = "less")
+O3.onesample <- t.test(EPAair$Ozone, mu = 50, alternative = "less") #specify that alternative hypothesis is less than 50, not just different than 50
 O3.onesample
 ```
 
 What information does the output give us? How might we report this information in a report?
 
-> ANWSER:
+> ANSWER: p-value is less than 0.05, which means we reject the null hypothesis that the mean = 50. , 95% confident that our true mean lies between -Inf and 37. Ozone AQI values in 2017-208 were significantly lower than 50 (one sample t-test; p < 0.001, t = -41.911, df = 1084).
 
 ### Two-sample t-test
 The two-sample *t* test is used to test the hypothesis that the mean of two samples is equivalent. Unlike the one-sample tests, a two-sample test requires a second assumption that the variance of the two groups is equivalent. Are Ozone levels different between Blackstone and Bryson City?
@@ -92,15 +95,17 @@ The two-sample *t* test is used to test the hypothesis that the mean of two samp
 ```{r}
 shapiro.test(EPAair$Ozone[EPAair$Site.Name == "Blackstone"])
 shapiro.test(EPAair$Ozone[EPAair$Site.Name == "Bryson City"])
-var.test(EPAair$Ozone ~ EPAair$Site.Name)
+var.test(EPAair$Ozone ~ EPAair$Site.Name) #can compare two populations' variances. Give us p-value indicating whether variances are the same. P < 0.05 means that the variances are different from each other
 
 ggplot(EPAair, aes(x = Ozone, color = Site.Name)) +
   geom_freqpoly(stat = "count")
 
+#two ways to run this kind of tes
+
 # Format as a t-test
 O3.twosample <- t.test(EPAair$Ozone ~ EPAair$Site.Name)
 O3.twosample
-O3.twosample$p.value
+O3.twosample$p.value #reject null hypothesis that two group means are equal
 
 # Format as a GLM
 O3.twosample2 <- lm(EPAair$Ozone ~ EPAair$Site.Name)
@@ -130,18 +135,18 @@ ggplot(EPAair, aes(x = PM2.5, color = Site.Name)) +
   geom_freqpoly(stat = "count")
 qqnorm(EPAair$PM2.5); qqline(EPAair$PM2.5)
 
-bartlett.test(EPAair$PM2.5 ~ EPAair$Site.Name)
+bartlett.test(EPAair$PM2.5 ~ EPAair$Site.Name) #test for equal variance for more than two groups of data. # p = 0.08 meaning they are not significantly diff from each other. Equal variance
 
 # Format as a GLM
 PM2.5.anova <- lm(EPAair$PM2.5 ~ EPAair$Site.Name)
-summary(PM2.5.anova)
+summary(PM2.5.anova) #only shows us which group is significantly different from the intercept
 
 # Format as an aov
 PM2.5.anova2 <- aov(EPAair$PM2.5 ~ EPAair$Site.Name)
-summary(PM2.5.anova2)
+summary(PM2.5.anova2) #only tells us whether site is a significant predictor, so must do post-hoc test, but gives us same p-value as lm for overall equation
 
 # Run a post-hoc test for pairwise differences
-TukeyHSD(PM2.5.anova2)
+TukeyHSD(PM2.5.anova2) #tells us the differences between those populations
 
 # Plot the results
 # How might you edit this graph to make it attractive?
@@ -149,10 +154,12 @@ TukeyHSD(PM2.5.anova2)
 PM2.5.anova.plot <- ggplot(EPAair, aes(x = Site.Name, y = PM2.5)) +
   geom_violin(draw_quantiles = 0.5)
 print(PM2.5.anova.plot)
+#can see that Bryon and Triple Oak have much closer means (not sig diff from each other)
+#can put asterisk over blackstone to show that it is stat sig diff from other two
 ```
 What information does the output give us? How might we report this information in a report?
 
-> ANSWER:
+> ANSWER:(ANOVA; F(2,1898) = 16.16, p < 0.0001)
 
 ### Non-parametric equivalent of ANOVA: Kruskal-Wallis Test
 As with the Wilcoxon test, the Kruskal-Wallis test is the non-parametric counterpart to the one-way ANOVA. Here, the data from two or more independent samples are replaced with their ranks without regard to the grouping AND based on the between-group sum of squares calculations. 
@@ -163,7 +170,7 @@ To analyze specific pairs in the data, you must use a *post hoc* test. These inc
 
 ```{r}
 PM2.5.kw <- kruskal.test(EPAair$PM2.5 ~ EPAair$Site.Name)
-PM2.5.kw
+PM2.5.kw #indicates sig diff among values, but doesn't indicate which sites differ
 
 # There are two functions to run the Dunn Test
 # dunn.test(EPAair$PM2.5, EPAair$Site.Name, kw = T, 
@@ -177,10 +184,10 @@ A two-way ANOVA allows us to examine the effects of two categorical explanatory 
 
 ```{r}
 TNanova.main <- lm(PeterPaul.nutrients$tn_ug ~ PeterPaul.nutrients$lakename + PeterPaul.nutrients$depth_id)
-summary(TNanova.main)
+summary(TNanova.main) #combo of two of the diff alpha values. Need to add between paul lake + id2 if you want that specific value
 
 TNanova.main2 <- aov(PeterPaul.nutrients$tn_ug ~ PeterPaul.nutrients$lakename + PeterPaul.nutrients$depth_id)
-summary(TNanova.main2)
+summary(TNanova.main2) #same p-val for depth id. Lake and depth id are sign predictors for actual concentrations of nitrogen levels
 
 TukeyHSD(TNanova.main2)
 
@@ -199,13 +206,14 @@ The output gives test statistics for each explanatory variable as well as the in
 
 ```{r}
 TNanova.interaction <- aov(PeterPaul.nutrients$tn_ug ~ PeterPaul.nutrients$lakename * PeterPaul.nutrients$depth_id)
-summary(TNanova.interaction)
+summary(TNanova.interaction) #there is a sig interaction between lake and nitrogen. Correlation between these two levels. 
 
 ```
 
 If the interaction is significant, we interpret pairwise differences for the interaction. If the interaction is not significant, we interpret differences for the main effects only.
 ```{r}
 TukeyHSD(TNanova.interaction)
+#3rd level shows all possible combinations
 ```
 
 Pairs are considered to be in the same grouping if the p-value for that pairing is > 0.05. It is easy to see that this grouping process can become complicated when many factors are present for each variable! For a challenge, try writing code that will generate groupings for each factor level in the dataset using the `glht` function in the `multcomp` package. 
