@@ -1,6 +1,6 @@
 ---
 title: "Assignment 6: Generalized Linear Models"
-author: "Student Name"
+author: "Rachel Bash"
 output: pdf_document
 geometry: margin=2.54cm
 editor_options: 
@@ -34,8 +34,20 @@ The completed exercise is due on Tuesday, 26 February, 2019 before class begins.
 
 ```{r}
 #1
+getwd()
+suppressMessages(library(tidyverse))
+suppressMessages(library(viridis))
+suppressMessages(library(RColorBrewer))
+suppressMessages(library(gridExtra))
+
+Ecotox <- read.csv("../Data/Raw/ECOTOX_Neonicotinoids_Mortality_raw.csv")
+ChemPhysics <- read.csv("../Data/Raw/NTL-LTER_Lake_ChemistryPhysics_Raw.csv")
 
 #2
+Rachel_theme <- theme_bw(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "right")
+theme_set(Rachel_theme)
 
 ```
 
@@ -50,31 +62,60 @@ Research question: Were studies on various neonicotinoid chemicals conducted in 
 
 ```{r}
 #3
+nlevels(Ecotox$Chemical.Name)
+levels(Ecotox$Chemical.Name)
 
 #4
+Shap.test <- Ecotox %>%
+  group_by(Chemical.Name) %>%
+  summarise(
+  statistic = shapiro.test(Pub..Year)$statistic, 
+  p.value = shapiro.test(Pub..Year)$p.value)
+print(Shap.test)
+
+
+ggplot(Ecotox, aes(x = Pub..Year, color = Chemical.Name)) +
+  geom_freqpoly(stat = "count")
+
+#as seen by the p-values and the graph, it is clear that none of these are normally distributed!
+
 
 #5
-
+bartlett.test(Ecotox$Pub..Year ~ Ecotox$Chemical.Name)
+#no equal variance
 ```
 
 6. Based on your results, which test would you choose to run to answer your research question?
 
-> ANSWER: 
+> ANSWER: Non-parametric equivalent of Anova, the Kruskal-Wallis test. 
 
 7. Run this test below. 
 
 8. Generate a boxplot representing the range of publication years for each chemical. Adjust your graph to make it pretty.
 ```{r}
 #7
+Ecotox$Pub..Year <- as.integer(Ecotox$Pub..Year)
+class(Ecotox$Pub..Year)
+
+NameYear.kw <- kruskal.test(Ecotox$Pub..Year ~ Ecotox$Chemical.Name)
+NameYear.kw
 
 #8
+NameYearPlot <- 
+  ggplot(Ecotox, aes(x = Chemical.Name, y = Pub..Year, color = Chemical.Name)) +
+  geom_boxplot() +
+  scale_y_continuous(breaks = c(1985, 1990, 1995, 2000, 2005, 2010, 2015)) +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1), legend.position = "none") +
+  labs(x = "Chemical Name ", y = "Publication Year") +
+  scale_color_brewer(palette = "Paired") 
+print(NameYearPlot)
 
 ```
 
 
 9. How would you summarize the conclusion of your analysis? Include a sentence summarizing your findings and include the results of your test in parentheses at the end of the sentence. 
 
-> ANSWER: 
+> ANSWER: Publication year by Chemical name is not approximated by a normal distribution. This is shown by the highly significant p-values for each Chemical Name (Shap.test table), meaning that the null hypothesis(there is normality for each) is rejected. In addition, the bartlett test shows that variances among the Chemical Names for publication year is not equal. Therefore, a non-parametric Kruskal Wallis test was utilized. This test shows that there is no significant relationship between publication year and chemical (Kruskal-Wallis; p-value < 0.0001, df = 8; chi-squared = 134.15).
 
 ## NTL-LTER test
 Research question: What is the best set of predictors for lake temperatures in July across the monitoring period at the North Temperate Lakes LTER? 
@@ -89,30 +130,56 @@ Research question: What is the best set of predictors for lake temperatures in J
 
 ```{r}
 #11
+Temp.Pred.July <- 
+  ChemPhysics %>%
+  filter(daynum %in% c(182:212)) %>%
+  select(lakename, year4, daynum, depth, temperature_C) %>%
+  filter(!is.na(temperature_C) & !is.na(depth) & !is.na(year4) & 
+           !is.na(daynum) & !is.na(lakename))
+
 
 #12
+Temp.Pred.July.AIC <- lm(data = Temp.Pred.July, temperature_C ~ depth + daynum + 
+              year4)
+step(Temp.Pred.July.AIC)
+
+July.model <- lm(data = Temp.Pred.July, temperature_C ~ depth + daynum + year4)
+summary(July.model)
 
 ```
 
 13. What is the final linear equation to predict temperature from your multiple regression? How much of the observed variance does this model explain?
 
-> ANSWER: 
+> ANSWER: See final linear equation below (p-value < 0.0001, df = 3, 9718, R^2^ = 0.74). The model explains 74% of the observed variance, which is pretty good.
+
+$$ Temperature = -6.46 - 1.95(depth) + 0.04(daynum) + 0.01(year) + \epsilon $$
 
 14. Run an interaction effects ANCOVA to predict temperature based on depth and lakename from the same wrangled dataset.
 
 ```{r}
 #14
+Temp.Pred.July.interaction <- lm(data = Temp.Pred.July, temperature_C ~ lakename * depth)
+summary(Temp.Pred.July.interaction)
 
 ```
 
 15. Is there an interaction between depth and lakename? How much variance in the temperature observations does this explain?
 
-> ANSWER: 
+> ANSWER: Yes, there is significant interaction between depth and lakename on temperature of lake (linear regression, ANCOVA; p-value < 0.0001, df = 17, 9704, R^2^ = 0.78). Not all interactions (specifically with Peter and Paul lakes) were significant, but the overall model is significant. 78% of the variance in temperature is explained by this model.
 
 16. Create a graph that depicts temperature by depth, with a separate color for each lake. Add a geom_smooth (method = "lm", se = FALSE) for each lake. Make your points 50 % transparent. Adjust your y axis limits to go from 0 to 35 degrees. Clean up your graph to make it pretty. 
 
-```{r}
+```{r, fig.height = 5, fig.width= 7, warning = FALSE}
 #16
+Temp.Pred.July.plot <- ggplot(Temp.Pred.July, aes(x = depth, y = temperature_C, color = lakename)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  ylim(0, 35) +
+  labs(x = "Depth (m)", y="Temperature (C)", color = "Lake") +
+  scale_color_viridis(option = "viridis", discrete = TRUE) +
+  theme(legend.position = "bottom", legend.text=element_text(size=9), 
+        legend.key.size = unit(0.1, "line"))
+print(Temp.Pred.July.plot)
 
 ```
 
