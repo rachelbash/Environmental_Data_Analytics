@@ -32,7 +32,7 @@ The completed exercise is due on Tuesday, 19 March, 2019 before class begins.
 
 Question: Did you do this?
 
-> ANSWER: 
+> ANSWER: Yes
 
 ## Set up your session 
 2. Set up your session. Upload the EPA air quality raw dataset for PM2.5 in 2018, and the processed NTL-LTER dataset for nutrients in Peter and Paul lakes. Build a ggplot theme and set it as your default theme. Make sure date variables are set to a date format.
@@ -40,22 +40,24 @@ Question: Did you do this?
 ```{r}
 
 getwd()
-library(tidyverse)
-install.packages("lubridate")
-library(lubridate)
-install.packages("nlme")
-library(nlme)
-install.packages("lsmeans")
-library(lsmeans)
-install.packages("multcompView")
-library(multcompView)
+suppressMessages(library(tidyverse))
+#install.packages("lubridate")
+suppressMessages(library(lubridate))
+#install.packages("nlme")
+suppressMessages(library(nlme))
+#install.packages("lsmeans")
+suppressMessages(library(lsmeans))
+#install.packages("multcompView")
+suppressMessages(library(multcompView))
+suppressMessages(library(trend))
 
-PMair -> read.csv("./Data/Processed/EPA_Air.PM25.2018") #re-save this as a csv in previous Assignment
-PeterPaul.nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv.csv")
+PMair <- read.csv("./Data/Raw/EPAair_PM25_NC2018_raw.csv") 
+PeterPaul.nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv")
 
 #Set Date
 PeterPaul.nutrients$sampledate <- as.Date(PeterPaul.nutrients$sampledate, 
-                                               format = "%m/%d/%y")
+                                               format = "%Y-%m-%d")
+PMair$Date <- as.Date(PMair$Date, format = "%m/%d/%y")
 
 Rachel_theme <- theme_bw(base_size = 14) +
   theme(axis.text = element_text(color = "black"), 
@@ -76,9 +78,11 @@ Research question: Do PM2.5 concentrations have a significant trend in 2018?
 ```{r}
 
 #a)
-ggplot(PMair, aes(x = Date, y = PM2.5)) +
-  geom_point() +
-  scale_color_manual(values = c("#7fcdbb", "#253494"))
+ggplot(PMair, aes(x = Date, y = Daily.Mean.PM2.5.Concentration)) +
+  geom_point(color="#7fcdbb") +
+  labs(x = "Date", y = "PM2.5 concentration in 2018") +
+  scale_x_date(date_breaks = "30 days", date_labels = "%b-%d") +
+  theme(axis.text.x = element_text(angle = 45,  hjust = 1))
 
 ```
 
@@ -92,31 +96,36 @@ PM2.5 = PM2.5[!duplicated(PM2.5$Date),]
 
 ```{r}
 #b)
-PM2.5 = PM2.5[order(PM2.5[,'Date'],-PM2.5[,'Site.ID']),]
-PM2.5 = PM2.5[!duplicated(PM2.5$Date),]
+PMair = PMair[order(PMair[,'Date'],-PMair[,'Site.ID']),]
+PMair = PMair[!duplicated(PMair$Date),]
 
 #c)
-ACF(PM2018.anova)
+PMair.auto <- lme(data= PMair, Daily.Mean.PM2.5.Concentration ~ Date, random = ~1|Site.Name) 
+summary(PMair.auto) #intercept = 82.2 and Date= -0.004
+
+PMair.auto
+
+ACF(PMair.auto) #=0.4740630033 is second value which is the degree of autocorrelation at first level
 
 #d)
-PM2018.mixed <- lme(data= PMair, PM2.5 ~ Date, random = ~1|Site.Name)
-summary(PM2018.mixed)
-
+PMair.mixed <- lme(data= PMair, Daily.Mean.PM2.5.Concentration ~ Date, random = ~1|Site.Name, correlation = corAR1(form = ~ Date|Site.Name, value = 0.474),
+                method = "REML")
+summary(PMair.mixed)
 
 ```
 
 Is there a significant increasing or decreasing trend in PM2.5 concentrations in 2018? 
 
-> ANSWER: 
+> ANSWER: No. When you account for the autocorrelation, there is not a significant change in PM2.5 concentrations over the course of 2018 (p-value = 0.36)
 
 3e. Run a fixed effects model with Date as the only explanatory variable. Then test whether the mixed effects model is a better fit than the fixed effect model. 
 
 ```{r}
-PM2018.fixed <- gls(data= PMair, PM2.5 ~ Date, method = "REML")
-summary(PM2018.fixed)
+PMair.fixed <- gls(data= PMair, Daily.Mean.PM2.5.Concentration ~ Date, method = "REML")
+summary(PMair.fixed)
 
 
-anova(PM2018.mixed, PM2018.fixed)
+anova(PMair.mixed, PMair.fixed)
 
 
 ```
@@ -124,7 +133,7 @@ anova(PM2018.mixed, PM2018.fixed)
 
 Which model is better?
 
-> ANSWER: 
+> ANSWER: The mixed linear model (which includes Site Name as a random effects is better) because it has a lower AIC value, and the two models are significantly different from one another as shown by the p-value which is < 0.0001.
 
 
 ## Run a Mann-Kendall test
@@ -136,8 +145,8 @@ Research question: Is there a trend in total N surface concentrations in Peter a
 ```{r}
 PeterPaul.nutrients.surface <- 
   PeterPaul.nutrients %>%
-  select(-lakeid, -depth_id, -comments) 
-  filter(depth == 0) 
+  select(-lakeid, -depth_id, -comments) %>%
+  filter(depth == 0) %>%
   filter(!is.na(tn_ug))
   
 # Splitting dataset by lake
@@ -145,10 +154,33 @@ Peter.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Pete
 Paul.nutrients.surface <- filter(PeterPaul.nutrients.surface, lakename == "Paul Lake")
 
 #Mann-Kendall test for Peter
-mk.test(Peter.nutrients.surface$tn_ug)
+mk.test(Peter.nutrients.surface$tn_ug) #there is definitely a trend over time (p-value < 0.0001)
 
 #Pettitt test for Peter
-pettitt.test(Peter.nutrients.surface$tn_ug)
+pettitt.test(Peter.nutrients.surface$tn_ug) #change point at 36
+
+#Re-run separate Mann-Kendall for each change point for Peter
+mk.test(Peter.nutrients.surface$tn_ug[1:36]) #no change over time for this section
+mk.test(Peter.nutrients.surface$tn_ug[37:98]) #another change point detected within this section because p-value is significant and z-value is positive, run pettitt test again
+
+#Pettitt test for Peter to detect where second change point is
+pettitt.test(Peter.nutrients.surface$tn_ug[37:98])
+
+#Another separate Mann-Kendall for each change point section for Peter
+mk.test(Peter.nutrients.surface$tn_ug[37:57]) #no change over time for this section
+mk.test(Peter.nutrients.surface$tn_ug[58:98]) #no change over time for this section
+
+
+
+```
+
+
+```{r}
+#Mann-Kendall test for Paul
+mk.test(Paul.nutrients.surface$tn_ug) #no significant trend over time for Paul lake (p-value = 0.73)
+
+#Pettitt test for Paul
+pettitt.test(Paul.nutrients.surface$tn_ug) #change point detected at 16 but result is not significant, as expected (p-value = 0.096)
 
 
 ```
@@ -156,7 +188,7 @@ pettitt.test(Peter.nutrients.surface$tn_ug)
 
 What are the results of this test?
 
-> ANSWER: 
+> ANSWER: Results for Peter: two change points - one at 36 and one at 57. Beyond line 36, if you split up the data even further, you see no significant positive or negative trend. Results for Paul: no change point or positive/negative trend over time. See annotations in above code for p-values.
 
 5. Generate a graph that illustrates the TN concentrations over time, coloring by lake and adding vertical line(s) representing changepoint(s).
 
@@ -164,8 +196,10 @@ What are the results of this test?
 ggplot(PeterPaul.nutrients.surface, aes(x = sampledate, y = tn_ug, color = lakename)) +
   geom_point() +
   scale_color_manual(values = c("#7fcdbb", "#253494")) +
-  geom_vline(xintercept = as.Date("1993-05-26"), color="#253494", lty = 2) +
-  geom_vline(xintercept = as.Date("1998-01-01"), color="#253494", lty = 2)
+  geom_vline(xintercept = as.Date("1993-06-02"), color="#253494", lty = 2) +
+  geom_vline(xintercept = as.Date("1994-06-29"), color="#253494", lty = 2) +
+  labs(x="Date", y="Total Nitrogen Concentration", color="Lake")
+  
 
 
 ```

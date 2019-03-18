@@ -22,7 +22,7 @@ editor_options:
 ```{r, message = FALSE, warning = FALSE}
 getwd()
 library(tidyverse)
-#install.packages("trend")
+install.packages("trend")
 library(trend)
 
 
@@ -70,12 +70,13 @@ PeterPaul.nutrients.surface <-
   select(-lakeid, -depth_id, -comments) %>%
   filter(depth == 0) %>%
   filter(!is.na(tp_ug))
-=======
+```
 A Mann-Kendall test will analyze whether there is a monotonic trend in the response variable over time. Let's use the Mann-Kendall test to investigate whether there is a trend in total phosphorus concentrations in Peter Lake over time. Mann-Kendall test does not account for seasonality.
 
+  
 ```{r}
 # Wrangle our dataset; looking at trends at top of the lake
-PeterPaul.nutrients.surface <- 
+PeterPaul.nutrients.surface.tp <- 
   PeterPaul.nutrients %>%
   select(-lakeid, -depth_id, -comments) %>% #take out lakeid, depth_id, and comment columns
   filter(depth == 0) %>% #depth is equal to 0, so looking at surface concentrations
