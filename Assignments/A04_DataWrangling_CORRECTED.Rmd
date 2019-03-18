@@ -89,10 +89,10 @@ Air.PM25.18.processed$AQS_PARAMETER_DESC <- c("PM2.5")
 #jake's way of doing it
 
 #6
-write.csv(Air.O3.17.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.O3.2017")
-write.csv(Air.O3.18.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.O3.2018")
-write.csv(Air.PM25.17.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.PM25.2017")
-write.csv(Air.PM25.18.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.PM25.2018")
+write.csv(Air.O3.17.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.O3.2017.csv")
+write.csv(Air.O3.18.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.O3.2018.csv")
+write.csv(Air.PM25.17.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.PM25.2017.csv")
+write.csv(Air.PM25.18.processed, row.names = FALSE, file = "../Data/Processed/EPA_Air.PM25.2018.csv")
 
 
 ```
