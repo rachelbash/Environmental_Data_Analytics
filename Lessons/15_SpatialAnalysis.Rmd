@@ -31,6 +31,9 @@ In this lesson, we explore how data can be represented spatially, and how we can
 # 1. REPRESENTING SPATIAL DATA IN R: 
 ## The vector (vs raster) data model
 Spatial data are modeled in two formats: vector and raster. Today, we'll be concentrating on vector data, returning to raster a bit later. With vector data, features are represented with a combination of three elements: **geometry**, **attributes**, and a **coordinate reference system**, or `crs`. Let's talk about the first two and then come back to the crs a bit later. 
+*geometry: where they are on the map
+*attribute: properties of that feature
+*coordinate reference sys: 
 
 
 ### Feature _geometries_
@@ -65,7 +68,7 @@ EPAair_PM_avg <- EPAair_PM25_NC2018_raw %>%
 
 #Plot the data using longitude and latitude as X and Y
 ggplot(EPAair_PM_avg, aes(x=SITE_LONGITUDE, y=SITE_LATITUDE)) + 
-  geom_point(aes(color=meanPM), size=4) #+ coord_equal() 
+  geom_point(aes(color=meanPM), size=4) + coord_equal() #coor-equal scales the map better so you can kind of see the map of NC
 ```
 
 This is more of a proof of concept than a useful map. We can sort of visualize spatial patterns in the data, but without context of scale or location, it's somewhat difficult. We can greatly improve this map with the help of some mapping packages for R...
@@ -75,7 +78,7 @@ This is more of a proof of concept than a useful map. We can sort of visualize s
 See https://rdrr.io/cran/mapview/man/mapviewOptions.html for more info.
 ```{r Plot EPA locations with `mapview`}
 #(Install and) Load the mapView package
-#install.packages('mapview')
+install.packages('mapview')
 library(mapview)
 
 #Set the available map backgrounds
@@ -103,19 +106,21 @@ Much better, no? And interactive! But while MapView loosely follows a familiar g
 See http://rstudio.github.io/leaflet/ for more info
 ```{r Plot with leaflet}
 #Import libraries 
-#install.packages('leaflet')
+install.packages('leaflet')
 library(leaflet)
 
 #Create the map and add Tiles
 myMap  <- leaflet(data=EPAair_PM_avg) %>% 
-  addTiles() %>% 
+  addTiles() %>%  #tiles are the background maps (default is open street map)
   addCircleMarkers(~SITE_LONGITUDE,~SITE_LATITUDE,
                    radius=(~meanPM*2),
                    stroke = FALSE, 
                    fillOpacity = 0.3,
-                   popup = ~as.character(`Site.Name`))
+                   popup = ~as.character(`Site.Name`)) #can specify what pops up when you click on point
 #Show the map
 myMap
+
+#you can either publish (far right above plot) or you can create a markdown in an html and you can have an interactive map
 ```
 
 There's much more we can do to make these maps prettier and more powerful, but we'll come back to that. But take time to notice the power of mapping: like previous plots, we are able to interpret patterns in our dataset, but in geographically mapping our data, we can visualize these patterns in a much richer context by viewing them next to other spatial datasets (e.g. our basemaps). 
@@ -145,7 +150,7 @@ Let's explore a few examples to familiarize ourselves with the `sf` package.
 First, let's convert our EPA dataframe to a simple features ("sf") dataframe and explore what's different:
 ```{r Create simple features from lat/lng fields}
 #Import the sf library
-#install.packages('sf')
+install.packages('sf')
 library(sf)
 
 #Convert the dataset to a spatially enabled "sf" data frame
