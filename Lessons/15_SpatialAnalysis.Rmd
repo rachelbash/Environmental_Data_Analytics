@@ -193,13 +193,13 @@ With our EPA data now spatially enabled, we can perform spatial analysis with th
 #Buffer the Durham Armory point 0.1 degrees
 Durham_buffer <- EPAair_PM_avg_sf %>% 
   filter(Site.Name == 'Durham Armory') %>% 
-  st_buffer(0.1)
+  st_buffer(0.1) #in degrees
 
 #View the result
 mapView(Durham_buffer)
 ```
 
-In running the above, you get an warning and the shape looks elliptical, not circular. What's up? Well, it's time to chat about coordinate reference systems...
+In running the above, you get a warning and the shape looks elliptical, not circular. What's up? Well, it's time to chat about coordinate reference systems...
 
 
 ## COORDINATE REFERENCE SYSTEMS ("CRS")
@@ -231,7 +231,7 @@ Some CRS, however, do not have an associated EPSG code, and for those, we can us
 
 ```{r Explore the CRS of our dataset}
 #Recall what the CRS is of our EPA dataset
-st_crs(EPAair_PM_avg_sf)
+st_crs(EPAair_PM_avg_sf) #4 letter code is the code that says what the crs is, also specifies the datum (model of the shape of the earth) 
 ```
 
 Now look that EPSG up on http://spatialreference.org. 
@@ -249,11 +249,12 @@ Applying our knowledge of CRS, let's transform our EPA sites from its native geo
 EPAair_PM_avg_sf_UTM <- st_transform(EPAair_PM_avg_sf, crs=26917)
 
 #Rebuffer the Durham Armory site. Is it now circular? 
-DA_UTM_buffer <- EPAair_PM_avg_sf_UTM %>% 
+DA_UTM_buffer <- EPAair_PM_avg_sf_UTM %>%     #popular for non universal scales
   filter(Site.Name == 'Durham Armory') %>%     # Filter for the Durham Armory Site
   st_buffer(2000)                              # Buffer 2000 meters
 
 mapView(DA_UTM_buffer)                         # View the results
+#looks a lot better (more circular, smaller circle) because we chose a better projection
 ```
 
 As we are now in a planar coordinate system, we can do some more spatial analysis... We'll examine one quick one - a distance analysis - as a quick preview, then more later after we add some other datasets...
@@ -267,7 +268,7 @@ Distances_to_DASite <- EPAair_PM_avg_sf_UTM %>%
 #Add new field of distances to Durham Armory site
 EPAair_PM_avg_sf <- mutate(EPAair_PM_avg_sf,Dist2DA = Distances_to_DASite)
 
-#Plot to see that it worked: larger = further?
+#Plot to see that it worked: larger = further
 ggplot() + 
   geom_sf(data=EPAair_PM_avg_sf,aes(size=Dist2DA)) 
 ```
