@@ -1,6 +1,6 @@
 ---
 title: "Assignment: Spatial Analysis in R"
-author: "Student Name"
+author: "Rachel Bash"
 output:
   html_document:
     toc: true
@@ -30,7 +30,10 @@ You should notice that the answer is highlighted in green by RStudio.
 ### 1. Prepare the workspace
 * Import: tidyverse, sf, and leaflet
 ```{r Prepare workspace}
-
+suppressMessages(library(tidyverse, quietly = TRUE))
+suppressMessages(library(mapview))
+suppressMessages(library(leaflet))
+suppressMessages(library(sf))
 ```
 
 ### 2. Read filtered county features into an sf dataframe and plot
@@ -44,17 +47,19 @@ Nebraska's state FIPS code is `31` (as North Carolina's was `37`).
 * Show the dataset's coordinate reference system
 * Plot the records as a map (in any format)
 ```{r Read the county data into an sf dataframe}
-#Read in Counties shapefile into an sf dataframe, filtering for just NC counties
-
+#Read in Counties shapefile into an sf dataframe, filtering for just NE counties
+counties_sf_NE <- st_read('../Data/Spatial/cb_2017_us_county_20m.shp') %>% 
+  filter(STATEFP == 31)
 
 #Reveal the CRS of the counties features
-
+st_crs(counties_sf_NE)
 
 #Plot the data
+mapView(counties_sf_NE)
 
 ```
 > QUESTION: What is the EPSG code of the Counties dataset? Using http://spatialreference.org, is this a geographic or a projected coordinate system? (Or, does this CRS use angular or planar coordinate units?) To what datum is this CRS associated?  
-> ANSWER: 
+> ANSWER: EPSG Code is 4269. The counties database uses the NAD83, or the North American 1983 Datum and it is a projected coordinate system. 
 
 ### 3. Read in gage locations csv as a dataframe, then display the column names it contains
 Next we'll read in some USGS/NWIS gage location data I've added to the `Data/Raw` folder. These 
@@ -64,34 +69,37 @@ info on this datset.)
 * Display the column names of this dataset
 ```{r Read in USGS Gage Locations}
 #Read in gage locations csv as a dataframe
-
+NWIS_NE <- read.csv("../Data/Raw/NWIS_SiteInfo_NE_RAW.csv")
 
 #Reveal the names of the columns
-
+names(NWIS_NE)
 ```
 > QUESTION: What columns in the dataset contain the x and y coordinate values, respectively? 
-> ANSWER: 
+> ANSWER: "dec_lat_va" and "dec_long_va"
 
 ### 4. Convert the gage locations dataframe to an sf dataframe of points
 * These data use the same coordnate reference system as the counties dataset
 * Display the column names of the resulting sf dataframe
 ```{r}
 #Convert to an sf object
-
+NWIS_NE_sf <- st_as_sf(NWIS_NE, coords = c('dec_long_va','dec_lat_va'),crs=4269)
+st_crs(NWIS_NE_sf)
 
 #Reveal the structure
+names(NWIS_NE_sf)
+class(NWIS_NE_sf$geometry)
 
 ```
 > QUESTION: What new field(s) appear in the sf dataframe created? What field(s), if any, disappeared?
-> ANSWER: 
+> ANSWER: There is now a new column called "geometry", which combined the long and lat columns from the dataframe. The sf dataframe now has one less column that the original dataframe because the sf data frame combined two into one.
 
 
 ### 5. Use `ggplot` to plot the gage locations on top of the counties
 * Plot the different datasets in different colors
 ```{r}
 ggplot() + 
-  geom_sf(data = sf_counties,col='red') + 
-  geom_sf(data = sf_gageloc,col='blue')
+  geom_sf(data = counties_sf_NE, col="red") + 
+  geom_sf(data = NWIS_NE_sf, col="blue")
 ```
 
 
@@ -109,16 +117,18 @@ stream gage heights (in meters) recorded during the recent flood event. This fil
 * Once joined, we will again have to convert this product (a dataframe) into a spatial dataframe. Do that.
 ```{r}
 #Read in the data
-
+flowdata <- read.csv("../Data/Raw/NWIS_SiteFlowData_NE_RAW.csv")
 
 #Show the column names
-
+names(flowdata)
 
 #Join location data to it
-
+gagedata <- NWIS_NE_sf %>%
+  left_join(y=flowdata, by = c("site_no" = "site_no"))
 
 #Convert back to sf dataframe
-
+st_crs(gagedata) #it looks like it already is, but I'll do it again just in case
+gagedata_sf <- st_as_sf(gagedata, coords = 'geometry',crs=4269)
 ```
 
 
@@ -129,6 +139,10 @@ Now we can examine where the flooding appears most acute by visualizing gage hei
  * Show the magnitude of gage height by color, shape, other visualization technique.
 ```{r}
 #Plot the values
+ggplot() + 
+  geom_sf(data = counties_sf_NE, col="#004529", size=0.5) + 
+  geom_sf(data = gagedata_sf, aes(color=gage_ht)) +
+  scale_color_gradient("gage_ht", low='#7fcdbb',high='#081d58')
 
 ```
 
@@ -141,16 +155,22 @@ transform our data into a projected coordinate system. We'll choose UTM Zone 14N
 * Using ggplot, plot the data so that each can be seen as different colors
 ```{r}
 #Transform the counties and gage location datasets to UTM Zone 14
+counties_sf_NE_utm <- st_transform(counties_sf_NE, c=32614)
+gagedata_sf_utm <- st_transform(gagedata_sf, c=32614)
 
 #Plot the data
+ggplot() + 
+  geom_sf(data = counties_sf_NE_utm, col="#004529", size=0.5) + 
+  geom_sf(data = gagedata_sf_utm, aes(color=gage_ht)) +
+  scale_color_gradient("gage_ht", low='#7fcdbb',high='#081d58')
 
 ```
 > QUESTION: The shape of Nebraska should look a bit different than the one created in Step 5? Why?
-> ANSWER: 
+> ANSWER: The projection is different. It has different bounds compared to the previous one we were using. For example, now it is in WGS84 instead of NAD83
 
 ### 9. Select the gages falling within a given county
 Now let's zoom into a particular county and examine the gages located there. 
-* Import the HUC8 dataset (`NE_HUC8s_prj.shp` in the Data\Spatial folder)
+
 * Select Lancaster county from your county sf dataframe
 * Select the gage sites falling `within` that county
  * Remember you'll have to create a mask and then apply that mask
@@ -160,10 +180,18 @@ Now let's zoom into a particular county and examine the gages located there.
  * and the gage sites in that county
 ```{r}
 #Select the county
+counties_sf_NE_utm_Lan <- counties_sf_NE_utm %>%
+  filter(NAME=='Lancaster')
 
 #Select gages within 
+Lancastermask <- st_intersects(gagedata_sf_utm, counties_sf_NE_utm_Lan, sparse=FALSE)
+Lancastergages <- gagedata_sf_utm[Lancastermask,]
 
 #Plot
+ggplot() +
+  geom_sf(data = counties_sf_NE_utm, col="#004529", size=0.5) +
+  geom_sf(data = counties_sf_NE_utm_Lan, col="red") +
+  geom_sf(data = Lancastergages, col="#081d58", size = 0.5)
 
 ```
 
@@ -179,11 +207,36 @@ attributes of the county in which it is located.
   * Displaying each gage locations county "NAME" as a different color.
   * Display each gage size proportional to its "gage_ht" value
 ```{r Spatial Join}
-#Join features
+
+
+#leaflet only does WGS84
+counties_sf_NE_wgs <- st_transform(counties_sf_NE, c=4326)
+gagedata_sf_wgs <- st_transform(gagedata_sf, c=4326)
+
+#Join
+countygages <-  
+  st_join(gagedata_sf_wgs, counties_sf_NE_wgs, join = st_intersects)
+
 
 #Show column names
-
+names(countygages$NAME)
+countygages$NAME <- as.character(countygages$NAME) #change to character
+counties_sf_NE_wgs$NAME <- as.character(counties_sf_NE_wgs$NAME)
 #Plot
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data=counties_sf_NE_wgs, color="#004529", weight = 1, smoothFactor = 0.5, opacity = 1.0) %>%
+  addCircleMarkers(data=countygages,
+                   radius=(~gage_ht), 
+                   stroke = FALSE, 
+                   fillOpacity = 0.3,
+                   popup = ~as.character(`NAME`))
+#cannot figure out how to color my counties, so the below colors by counties
+
+ggplot(legend=FALSE) +
+  geom_sf(data = counties_sf_NE, aes(color = "#004529")) +
+  geom_sf(data = countygages, aes(color = NAME, size = gage_ht))
 
 ```
 
@@ -199,12 +252,24 @@ it's mean gage height.
  * Not all counties will have data
 ```{r}
 #Group and summarize
+countygages_bycounty <- countygages %>%
+  group_by(NAME) %>%
+  filter(!is.na(gage_ht)) %>%
+  summarise(mean_gage_ht=mean(gage_ht))
+View(countygages_bycounty)
+
 
 #Convert result to a simple dataframe
+countygages_bycounty <- st_drop_geometry(countygages_bycounty)
 
 #Join summary to County fc
+countygages_join <- counties_sf_NE_wgs %>%
+  left_join(countygages_bycounty, by = c("NAME" = "NAME"))
 
 #Plot
+ggplot() +
+  geom_sf(data = countygages_join, aes(fill= mean_gage_ht)) +
+  scale_fill_gradient(low ="#7fcdbb", high="#081d58")
 
 ```
 
