@@ -17,29 +17,58 @@ editor_options:
 ## BASIC R MARKDOWN DOCUMENT STRUCTURE
 
 1. **YAML Header** surrounded by --- on top and bottom
+    + "Yet another markdown language"
     + YAML templates include options for html, pdf, word, markdown, and interactive
     + More information on formatting the YAML header can be found in the cheat sheet
 2. **R Code Chunks** surrounded by ``` on top and bottom
     + Create using `Cmd/Ctrl` + `Alt` + `I`
     + Can be named {r name} to facilitate navigation and autoreferencing
     + Chunk options allow for flexibility when the code runs and when the document is knitted
+```{r name}
+
+```
+    
 3. **Text** with formatting options for readability in knitted document
 
 A handy cheat sheet for R markdown can be found [here](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf). Another one can be found [here](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf).
 
 ## WHY R MARKDOWN?
 
-<Fill in our discussion below with bullet points. Use italics and bold for emphasis>
+<These arrows let R Markdown know to not include it in the pdf. These can be secret notes inside R code that won't show up >
+
+- To create a bullet, a dash with a space. You can also use +, *
+- Code, output, and text/notes all in one document
+- Knit to useful formats
+- Share code and output legibly 
+- git friendly - version control!
+- reproducible
+- As a communicaiton tool, what do I want my reader to see, versus what happens behind the scenes. 
+- You can focus on output and conclusions, not code. Or vise versa - flexible formating
+- Makes it easy for you to format. Simple syntax and autoreferencing.
+
 
 ## TEXT EDITING CHALLENGE
 
 Create a table below that details the example datasets we have been using in class. The first column should contain the name of the dataset and the second column should include some relevant information about the dataset.
+
+Dataset  |  Relevant Info
+-------- | ---------------
+NTLER    |  Nutrients in lakes
+Ecotox   |  Neonicotinoids
+EPAair   |  Air quality
+USGS     |  Stream Flow data
+NTLER    |  Carbon in lakes
+NTLER    |  Chemistry and physical data in lakes
 
 
 ## R CHUNK EDITING CHALLENGE
 ### Installing packages
 Create an R chunk below that installs the package `knitr`. Instead of commenting out the code, customize the chunk options such that the code is not evaluated (i.e., not run). 
 
+```{r, eval=FALSE}
+install.packages("knitr")
+
+```
 
 ### Setup
 Create an R chunk below called "setup" that checks your working directory, loads the packages `tidyverse` and `knitr`, and sets a ggplot theme. 
@@ -48,21 +77,84 @@ Load the NTL-LTER_Lake_Nutrients_Raw dataset, display the head of the dataset, a
 
 Customize the chunk options such that the code is run but is not displayed in the final document.
 
+```{r Setup, include=FALSE}
+getwd()
+library(tidyverse) #require will do the same thing, except without any warning or error messages
+require(knitr)
+library(viridis)
+
+Rachel_theme <- theme_bw(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "right")
+theme_set(Rachel_theme)
+
+Nutrients <- read.csv("../Data/Raw/NTL-LTER_Lake_Nutrients_Raw.csv")
+head(Nutrients)
+
+Nutrients$sampledate <- as.Date(Nutrients$sampledate, format = "%m/%d/%y")
+class(Nutrients$sampledate)
+```
+
 
 ### Data Exploration, Wrangling, and Visualization
 Create an R chunk below to create a processed dataset do the following operations: 
 
 * Include all columns except lakeid, depth_id, and comments
 * Include only surface samples (depth = 0 m)
+```{r}
+Nutrients_processed <- Nutrients %>%
+  select(-lakeid, -depth_id, -comments) %>% #for filter, use & and | and for select, use commas
+  filter(depth==0)
+#View(Nutrients_processed)
+```
 
 
 Create a second R chunk to create a summary dataset with the mean, minimum, maximum, and standard deviation of total nitrogen concentrations for each lake. Create a second summary dataset that is identical except that it evaluates total phosphorus. Customize the chunk options such that the code is run but not displayed in the final document. 
+```{r, echo=FALSE}
+Nutrients_sum_tn <- Nutrients_processed %>%
+  group_by(lakename) %>%
+  summarise(mean_tn = mean(tn_ug), 
+            min_tn = min(tn_ug),
+            max_tn = max(tn_ug),
+            sd_tn = sd(tn_ug))
+#View(Nutrients_sum_tn)
+
+Nutrients_sum_tp <- Nutrients_processed %>%
+  group_by(lakename) %>%
+  summarise(mean_tp = mean(tp_ug), 
+            min_tp = min(tp_ug),
+            max_tp = max(tp_ug),
+            sd_tp = sd(tp_ug))
+#View(Nutrients_sum_tp)
+```
 
 
 Create a third R chunk that uses the function `kable` in the knitr package to display two tables: one for the summary dataframe for total N and one for the summary dataframe of total P. Use the `caption = " "` code within that function to title your tables. Customize the chunk options such that the final table is displayed but not the code used to generate the table. 
 
+```{r, echo=FALSE}
+kable(Nutrients_sum_tn, caption = "Total N") 
+  
+kable(Nutrients_sum_tp, caption = "Total P") 
+  
+```
+
 
 Create a fourth and fifth R chunk that generates two plots (one in each chunk): one for total N over time with different colors for each lake, and one with the same setup but for total P. Decide which geom option will be appropriate for your purpose, and select a color palette that is visually pleasing and accessible. Customize the chunk options such that the final figures are displayed but not the code used to generate the figures. In addition, customize the chunk options such that the figures are aligned on the left side of the page. Lastly, add a fig.cap chunk option to add a caption (title) to your plot that will display underneath the figure.
+```{r, fig.cap="Total Nitrogen over time", echo=FALSE, warning=FALSE}
+total_n <- ggplot(Nutrients_processed, aes(x=sampledate, y=tn_ug)) +
+  geom_point(aes(col=lakename)) +
+  labs(x= "Date", y= "Total N, ug", color = "Lake Name") +
+  scale_color_brewer(palette = "YlGnBu")
+total_n
+```
+
+```{r, fig.cap="Total Phosphorus over time", echo=FALSE, warning=FALSE}
+total_p <- ggplot(Nutrients_processed, aes(x=sampledate, y=tp_ug)) +
+  geom_point(aes(col=lakename)) +
+  labs(x= "Date", y= "Total P, ug", color = "Lake Name") +
+  scale_color_brewer(palette = "YlGnBu")
+total_p
+```
 
 
 ### Other options
@@ -80,7 +172,7 @@ Customization options for pdf output include:
 
 * Table of contents
 * Number sections
-* Control default size of figures
+* Control default size of figures in YAML header
 * Citations
 * Template (more info [here](http://jianghao.wang/post/2017-12-08-rmarkdown-templates/))
 
