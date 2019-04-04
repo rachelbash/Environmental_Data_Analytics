@@ -2,7 +2,13 @@ library(shiny)
 library(ggplot2)
 
 
-# ui
+# ui (user interface)
+#imput and output function, all with names i.e. Input("x")
+#server goes on in background and viewer never sees (input$x)
+#UI(input) -> Server (input) -> Server(output) -> UI(output)
+
+#put packages up above, and put data first
+
 ui <- fluidPage(
    
    # title
@@ -31,7 +37,8 @@ ui <- fluidPage(
                      value = 5,
                      step = 0.1),
          checkboxInput('histogram', label = 'histogram', value = TRUE), 
-         checkboxInput('density', label = 'density', value = TRUE)
+         checkboxInput('density', label = 'density', value = TRUE),
+         textInput('title', label="What should I call this?")
       ),
       
       # main plot
@@ -41,7 +48,7 @@ ui <- fluidPage(
    )
 )
 
-# server
+# server, always start with this line below
 server <- function(input, output) {
    
    output$dist <- renderPlot({ # adjust the number of bins based on the sample size
@@ -64,7 +71,7 @@ server <- function(input, output) {
      p <- ggplot() + scale_x_continuous(limits = c(-20, 20))
      if(input$histogram) p <- p + geom_histogram(aes(x, y = ..density..), bins = bins, colour = 'black', fill = 'white') # add hist if checked
      if(input$density) p <- p + geom_density(aes(x), alpha=.2, fill="#FF6666") # add density if checked
-     p + theme_minimal()
+     p + theme_minimal() + labs(title=input$title)
    })
 }
 
