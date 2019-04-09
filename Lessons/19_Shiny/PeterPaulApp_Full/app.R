@@ -11,7 +11,7 @@ nutrient_data <- nutrient_data %>%
   select(lakename, sampledate:po4)
 
 #### Define UI ----
-ui <- fluidPage(theme = shinytheme("yeti"),
+ui <- fluidPage(theme = shinytheme("readable"),
   titlePanel("Nutrients in Peter Lake and Paul Lake"),
   sidebarLayout(
     sidebarPanel(
@@ -67,11 +67,13 @@ server <- function(input, output) {
           theme_classic(base_size = 14) +
           scale_shape_manual(values = c(21, 24)) +
           labs(x = "Date", y = expression(Concentration ~ (mu*g / L)), shape = "Lake", fill = "Depth ID") +
-          scale_fill_distiller(palette = "YlOrBr", guide = "colorbar", direction = 1)
-          #scale_fill_viridis_c(option = "viridis", begin = 0, end = 0.8, direction = -1)
+          #scale_fill_distiller(palette = "YlOrBr", guide = "colorbar", direction = 1)
+          scale_fill_viridis_c(option = "viridis", begin = 0, end = 0.8, direction = -1)
       })
        
     # Create a table that generates data for each point selected on the graph  
+       #rendertable doesn't work well with dates
+       #try renderDataTable if you really want this. Needs more formatting
        output$mytable <- renderTable({
          brush_out <- brushedPoints(filtered_nutrient_data(), input$scatterplot_brush)
        })
