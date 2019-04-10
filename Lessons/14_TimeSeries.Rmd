@@ -21,13 +21,14 @@ editor_options:
 
 ```{r, message = FALSE, warning = FALSE}
 getwd()
+setwd("/Users/rachelbash/Documents/DUKE/Data Analytics/Environmental_Data_Analytics")
 library(tidyverse)
 install.packages("trend")
 library(trend)
 
 
 PeterPaul.nutrients <- read.csv("./Data/Processed/NTL-LTER_Lake_Nutrients_PeterPaul_Processed.csv")
-USGS.flow.data <- read.csv("./Data/Raw/USGS_Site02085000_Flow_Raw.csv")
+USGS.flow.data <- read.csv("/Data/Raw/USGS_Site02085000_Flow_Raw.csv")
 
 # Rename columns
 colnames(USGS.flow.data) <- c("agency_cd", "site_no", "datetime", 
